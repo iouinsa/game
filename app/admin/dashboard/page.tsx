@@ -19,7 +19,7 @@ export default function AdminDashboard() {
     const initSession = async () => {
       const { data, error } = await getSession();
       if (isMounted) {
-        if (error) setErrorMsg(error.message);
+               if (error) setErrorMsg((error as any).message);
         else setSession(data);
         setLoading(false);
       }

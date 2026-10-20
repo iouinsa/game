@@ -83,7 +83,7 @@ export default function PesertaQuiz() {
       const teamCode = localStorage.getItem("team_code");
       
       const { data: teamData } = await supabase.from("teams").select("id, score").eq("code", teamCode).single();
-      const { data: memberData } = await supabase.from("team_members").select("id").eq("team_id", teamData.id).eq("nickname", nickname).maybeSingle();
+            const { data: memberData } = await supabase.from("team_members").select("id").eq("team_id", teamData.id).eq("nickname", nickname).maybeSingle();
       
       if (teamData && memberData) {
         // 1. Catat kalau akun ini udah main

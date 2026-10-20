@@ -23,7 +23,10 @@ export default function PesertaQuiz() {
 
       // 1. Ambil ID Tim & ID Member
       const { data: teamData } = await supabase.from("teams").select("id").eq("code", teamCode).single();
-      if (!teamData) return;
+      if (!teamData) {
+        alert("Tim tidak ditemukan.");
+        return router.push("/peserta/home");
+      }
 
       const { data: memberData } = await supabase
         .from("team_members")
@@ -82,19 +85,29 @@ export default function PesertaQuiz() {
       const nickname = localStorage.getItem("nickname");
       const teamCode = localStorage.getItem("team_code");
       
+      // Ambil data tim
       const { data: teamData } = await supabase.from("teams").select("id, score").eq("code", teamCode).single();
-            const { data: memberData } = await supabase.from("team_members").select("id").eq("team_id", teamData.id).eq("nickname", nickname).maybeSingle();
       
-      if (teamData && memberData) {
-        // 1. Catat kalau akun ini udah main
-        await supabase.from("quiz_submissions").insert([{ 
-          team_id: teamData.id, 
-          member_id: memberData.id, 
-          score: newScore 
-        }]);
-        
-        // 2. Tambahkan skornya ke total skor tim
-        await supabase.from("teams").update({ score: teamData.score + newScore }).eq("id", teamData.id);
+      // Pengaman untuk TypeScript (biar nggak error 'possibly null')
+      if (teamData) {
+        const { data: memberData } = await supabase
+          .from("team_members")
+          .select("id")
+          .eq("team_id", teamData.id) // Sekarang aman karena dibungkus IF
+          .eq("nickname", nickname)
+          .maybeSingle();
+          
+        if (memberData) {
+          // 1. Catat kalau akun ini udah main
+          await supabase.from("quiz_submissions").insert([{ 
+            team_id: teamData.id, 
+            member_id: memberData.id, 
+            score: newScore 
+          }]);
+          
+          // 2. Tambahkan skornya ke total skor tim
+          await supabase.from("teams").update({ score: teamData.score + newScore }).eq("id", teamData.id);
+        }
       }
 
       setStep("result");

@@ -37,3 +37,54 @@ input, textarea, select {
 /* Sembunyikan scrollbar tapi tetap bisa discroll */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
+
+/* BACKGROUND SUPER MARIO */
+.mario-bg {
+  background-color: #5c94fc; /* Langit biru khas Mario */
+  position: relative;
+  overflow: hidden;
+}
+
+/* Awan Putih */
+.mario-clouds {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle at 15% 20%, white 15px, transparent 16px),
+    radial-gradient(circle at 25% 20%, white 25px, transparent 26px),
+    radial-gradient(circle at 35% 20%, white 15px, transparent 16px),
+    radial-gradient(circle at 75% 10%, white 15px, transparent 16px),
+    radial-gradient(circle at 85% 10%, white 25px, transparent 26px),
+    radial-gradient(circle at 95% 10%, white 15px, transparent 16px);
+  z-index: 0;
+  opacity: 0.8;
+}
+
+/* Bukit Hijau (Hills) */
+.mario-hills {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  background-color: #22c55e; /* Warna rumput */
+  border-top-left-radius: 50% 100px;
+  border-top-right-radius: 50% 100px;
+  z-index: 0;
+  box-shadow: inset 0 10px 0 rgba(255,255,255,0.2);
+}
+
+/* Tanah Coklat (Ground) */
+.mario-ground {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background-color: #d97706; /* Warna tanah */
+  border-top: 4px solid #166534; /* Garis hijau tua di atas tanah */
+  z-index: 1;
+}

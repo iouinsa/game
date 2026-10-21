@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import TimerProvider from "./components/TimerProvider";
 
 export const metadata: Metadata = {
   title: "Photo Hunt Kebun Raya — IO UINSA",
-  // ... (sisanya biarkan sama)
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {
@@ -12,7 +14,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#065f46",
+  themeColor: "#5c94fc", // Warna langit biru
 };
 
 export default function RootLayout({
@@ -23,10 +25,19 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className="antialiased">
-        <div className="flex flex-col h-[100dvh] max-w-[480px] mx-auto bg-gray-50 relative overflow-hidden shadow-2xl md:h-screen">
-          <TimerProvider>
+        {/* Container Utama (Frame HP) */}
+        <div className="flex flex-col h-[100dvh] max-w-[480px] mx-auto bg-white relative overflow-hidden shadow-2xl md:h-screen mario-bg">
+          
+          {/* BACKGROUND SUPER MARIO */}
+          <div className="mario-clouds"></div>
+          <div className="mario-hills"></div>
+          <div className="mario-ground"></div>
+          
+          {/* KONTEN APLIKASI (Diberi z-index biar di atas background) */}
+          <div className="relative z-10 flex flex-col h-full bg-transparent">
             {children}
-          </TimerProvider>
+          </div>
+
         </div>
       </body>
     </html>

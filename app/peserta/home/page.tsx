@@ -28,7 +28,6 @@ export default function PesertaHome() {
     setNickname(nick);
     setTeamCode(team);
 
-    // 0. Pantau kalau event selesai (otomatis pindah ke Rank)
     const checkStatus = setInterval(async () => {
       const { data } = await supabase.from("session_settings").select("is_finished").eq("id", 1).single();
       if (data && data.is_finished) {
@@ -37,7 +36,6 @@ export default function PesertaHome() {
       }
     }, 2000);
 
-    // 1. Fungsi Ambil Data
     const fetchData = async () => {
       try {
         const { data: sessionData } = await getSession();
@@ -66,10 +64,24 @@ export default function PesertaHome() {
 
     fetchData();
 
-    // 2. Realtime Listener
     const channel = supabase.channel(`peserta_${team}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'session_settings' }, (payload) => {
-        setSession(payload.new);
+        // PERBAIKAN: Hanya timpa state kalau Admin nge-pause, nge-play, atau reset
+        // Kalau cuma update detik biasa, abaikan (biar timer lokal kita yang jalan)
+        setSession((prev: any) => {
+          if (!prev) return payload.new;
+          
+          const needsReset = payload.new.is_paused !== prev.is_paused || 
+                             payload.new.is_running !== prev.is_running || 
+                             payload.new.is_finished !== prev.is_finished ||
+                             payload.new.remaining_seconds > (prev.remaining_seconds + 2); // Deteksi kalau di-reset
+                             
+          if (needsReset) {
+            return payload.new;
+          }
+          return prev;
+        });
+
         if (payload.new.is_finished) {
           router.push("/peserta/rank");
         }
@@ -82,7 +94,7 @@ export default function PesertaHome() {
       })
       .subscribe();
 
-    // 3. Detak Timer Lokal
+    // Detak Timer Lokal (Jalan tiap 1 detik)
     localTimerRef.current = setInterval(() => {
       setSession((prev: any) => {
         if (prev && prev.is_running && !prev.is_paused && !prev.is_finished && prev.remaining_seconds > 0) {

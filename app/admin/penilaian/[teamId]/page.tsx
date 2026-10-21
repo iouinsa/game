@@ -124,7 +124,7 @@ export default function AdminPenilaianDetail() {
   return (
     <>
       <Header />
-      <Suspense fallback={<div className="p-8 text-center text-gray-500">Memuat halaman...</div>}>
+      <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading page...</div>}>
         <PenilaianDetailContent />
       </Suspense>
       <BottomNav />

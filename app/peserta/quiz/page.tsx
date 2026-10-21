@@ -23,17 +23,12 @@ export default function PesertaQuiz() {
 
       // 1. Ambil ID Tim & ID Member
       const { data: teamData } = await supabase.from("teams").select("id").eq("code", teamCode).single();
-      
-      if (!teamData) {
-        alert("Tim tidak ditemukan.");
-        return router.push("/peserta/home");
-      }
+      if (!teamData) return;
 
-      // PERHATIKAN BARIS INI: pakai teamData?.id (ada tanda tanya)
       const { data: memberData } = await supabase
         .from("team_members")
         .select("id")
-        .eq("team_id", teamData?.id) 
+        .eq("team_id", teamData.id)
         .eq("nickname", nickname)
         .maybeSingle();
       
@@ -46,7 +41,7 @@ export default function PesertaQuiz() {
       const { data: quizData } = await supabase
         .from("quiz_submissions")
         .select("id")
-        .eq("member_id", memberData?.id) // Kasih tanda tanya juga di sini
+        .eq("member_id", memberData.id)
         .maybeSingle();
         
       if (quizData) setIsDone(true);
@@ -54,6 +49,7 @@ export default function PesertaQuiz() {
       // 3. Ambil soal quiz & ACAK URUTANNYA
       const { data: qData } = await supabase.from("quiz_questions").select("*");
       if (qData) {
+        // Acak array soal
         const shuffled = [...qData].sort(() => Math.random() - 0.5);
         setQuestions(shuffled);
       }
@@ -73,6 +69,7 @@ export default function PesertaQuiz() {
     const q = questions[currentIdx];
     let newScore = score;
     
+    // 10 Poin per soal yang bener
     if (selectedIdx === q.correct_index) {
       newScore += 10; 
       setScore(newScore);
@@ -81,28 +78,23 @@ export default function PesertaQuiz() {
     if (currentIdx + 1 < questions.length) {
       setCurrentIdx(currentIdx + 1);
     } else {
+      // SIMPAN HASIL
       const nickname = localStorage.getItem("nickname");
       const teamCode = localStorage.getItem("team_code");
       
       const { data: teamData } = await supabase.from("teams").select("id, score").eq("code", teamCode).single();
+      const { data: memberData } = await supabase.from("team_members").select("id").eq("team_id", teamData.id).eq("nickname", nickname).maybeSingle();
       
-      if (teamData) {
-        const { data: memberData } = await supabase
-          .from("team_members")
-          .select("id")
-          .eq("team_id", teamData.id) 
-          .eq("nickname", nickname)
-          .maybeSingle();
-          
-        if (memberData) {
-          await supabase.from("quiz_submissions").insert([{ 
-            team_id: teamData.id, 
-            member_id: memberData.id, 
-            score: newScore 
-          }]);
-          
-          await supabase.from("teams").update({ score: teamData.score + newScore }).eq("id", teamData.id);
-        }
+      if (teamData && memberData) {
+        // 1. Catat kalau akun ini udah main
+        await supabase.from("quiz_submissions").insert([{ 
+          team_id: teamData.id, 
+          member_id: memberData.id, 
+          score: newScore 
+        }]);
+        
+        // 2. Tambahkan skornya ke total skor tim
+        await supabase.from("teams").update({ score: teamData.score + newScore }).eq("id", teamData.id);
       }
 
       setStep("result");

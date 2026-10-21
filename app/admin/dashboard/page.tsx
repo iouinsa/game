@@ -19,7 +19,7 @@ export default function AdminDashboard() {
     const initSession = async () => {
       const { data, error } = await getSession();
       if (isMounted) {
-               if (error) setErrorMsg((error as any).message);
+        if (error) setErrorMsg((error as any).message);
         else setSession(data);
         setLoading(false);
       }
@@ -37,24 +37,25 @@ export default function AdminDashboard() {
     };
   }, []);
 
+  // MESIN TIMER ADMIN
   useEffect(() => {
     timerRef.current = setInterval(async () => {
-      setSession((prev: any) => {
-        if (prev && prev.is_running && !prev.is_paused && !prev.is_finished && prev.remaining_seconds > 0) {
-          return { ...prev, remaining_seconds: prev.remaining_seconds - 1 };
-        }
-        return prev;
-      });
+      const { data } = await supabase.from("session_settings").select("*").eq("id", 1).single();
+      
+      if (data) {
+        setSession((prev: any) => {
+          if (!prev) return data;
+          if (prev.is_running !== data.is_running || prev.is_paused !== data.is_paused || prev.remaining_seconds !== data.remaining_seconds) {
+            return data;
+          }
+          return prev;
+        });
 
-      try {
-        const { data } = await supabase.from("session_settings").select("*").eq("id", 1).single();
-        if (data && data.is_running && !data.is_paused && !data.is_finished && data.remaining_seconds > 0) {
+        if (data.is_running && !data.is_paused && !data.is_finished && data.remaining_seconds > 0) {
           await supabase.from("session_settings")
             .update({ remaining_seconds: data.remaining_seconds - 1 })
             .eq("id", 1);
         }
-      } catch (err) {
-        console.error("Error Timer:", err);
       }
     }, 1000);
 
@@ -79,7 +80,6 @@ export default function AdminDashboard() {
     await updateSession({ is_running: false, is_paused: false, is_finished: false, remaining_seconds: durasi * 60 });
   };
 
-  // FUNGSI STOP YANG BARU (ADMIN TETAP DI HALAMAN)
   const handleStop = async () => {
     if (!confirm("Hentikan waktu dan tampilkan skor akhir?")) return;
     setSession((prev: any) => ({ ...prev, is_running: false, is_paused: false, is_finished: true, remaining_seconds: 0 }));
@@ -134,6 +134,7 @@ export default function AdminDashboard() {
             <button onClick={handleSetDuration} className="bg-gray-200 hover:bg-gray-300 rounded p-1 px-3 font-semibold ml-auto transition">Set</button>
           </div>
 
+          {/* SWITCH LEADERBOARD */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-100">
             <div>
               <div className="text-sm font-semibold text-gray-800">Tampilkan Rank ke Peserta</div>
@@ -149,8 +150,26 @@ export default function AdminDashboard() {
               <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${session.show_leaderboard ? 'translate-x-6' : 'translate-x-1'}`}></div>
             </button>
           </div>
+
+          {/* SWITCH LOGOUT PESERTA (BARU) */}
+          <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-4">
+            <div>
+              <div className="text-sm font-semibold text-gray-800">Izinkan Peserta Keluar</div>
+              <div className="text-xs text-gray-500">Tampilkan tombol logout di HP</div>
+            </div>
+            <button 
+              onClick={async () => {
+                setSession((prev: any) => ({ ...prev, show_logout: !prev.show_logout }));
+                await updateSession({ show_logout: !session.show_logout });
+              }}
+              className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${session.show_logout ? 'bg-red-500' : 'bg-gray-300'}`}
+            >
+              <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${session.show_logout ? 'translate-x-6' : 'translate-x-1'}`}></div>
+            </button>
+          </div>
         </div>
 
+        {/* TOMBOL MENU */}
         <div className="grid grid-cols-1 gap-3 mb-4">
           <div className="grid grid-cols-2 gap-3">
             <button onClick={() => router.push('/admin/penilaian')} className="bg-white p-4 rounded-xl shadow flex flex-col items-center justify-center gap-2 active:scale-95 transition border border-gray-100">

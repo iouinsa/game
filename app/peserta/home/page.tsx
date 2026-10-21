@@ -66,19 +66,13 @@ export default function PesertaHome() {
 
     const channel = supabase.channel(`peserta_${team}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'session_settings' }, (payload) => {
-        // PERBAIKAN: Hanya timpa state kalau Admin nge-pause, nge-play, atau reset
-        // Kalau cuma update detik biasa, abaikan (biar timer lokal kita yang jalan)
         setSession((prev: any) => {
           if (!prev) return payload.new;
-          
           const needsReset = payload.new.is_paused !== prev.is_paused || 
                              payload.new.is_running !== prev.is_running || 
                              payload.new.is_finished !== prev.is_finished ||
-                             payload.new.remaining_seconds > (prev.remaining_seconds + 2); // Deteksi kalau di-reset
-                             
-          if (needsReset) {
-            return payload.new;
-          }
+                             payload.new.remaining_seconds > (prev.remaining_seconds + 2);
+          if (needsReset) return payload.new;
           return prev;
         });
 
@@ -94,14 +88,22 @@ export default function PesertaHome() {
       })
       .subscribe();
 
-    // Detak Timer Lokal (Jalan tiap 1 detik)
-    localTimerRef.current = setInterval(() => {
-      setSession((prev: any) => {
-        if (prev && prev.is_running && !prev.is_paused && !prev.is_finished && prev.remaining_seconds > 0) {
-          return { ...prev, remaining_seconds: prev.remaining_seconds - 1 };
-        }
-        return prev;
-      });
+    // MESIN TIMER PESERTA
+    localTimerRef.current = setInterval(async () => {
+      const { data } = await supabase.from("session_settings").select("*").eq("id", 1).single();
+      
+      if (data) {
+        setSession((prev: any) => {
+          if (!prev) return data;
+          if (prev.is_running !== data.is_running || prev.is_paused !== data.is_paused || prev.is_finished !== data.is_finished) {
+            return data;
+          }
+          if (data.remaining_seconds < prev.remaining_seconds) {
+             return data;
+          }
+          return prev;
+        });
+      }
     }, 1000);
 
     return () => { 
@@ -110,6 +112,13 @@ export default function PesertaHome() {
       clearInterval(checkStatus);
     };
   }, [router]);
+
+  // FUNGSI LOGOUT
+  const handleLogout = () => {
+    localStorage.removeItem("nickname");
+    localStorage.removeItem("team_code");
+    router.push("/");
+  };
 
   return (
     <>
@@ -120,6 +129,12 @@ export default function PesertaHome() {
             <h1 className="text-lg font-bold text-green-800">Tim {teamCode}</h1>
             <p className="text-xs text-gray-500">Halo, {nickname}!</p>
           </div>
+          {/* TOMBOL KELUAR MUNCUL KALAU SWITCH NYALA */}
+          {session?.show_logout && (
+            <button onClick={handleLogout} className="text-red-500 font-semibold text-xs border border-red-500 px-3 py-1 rounded-lg">
+              Keluar
+            </button>
+          )}
         </div>
 
         <div className="px-4">

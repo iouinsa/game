@@ -14,7 +14,45 @@ export default function PesertaHome() {
   const [teamScore, setTeamScore] = useState(0);
   const [session, setSession] = useState<any>(null);
   const [submissions, setSubmissions] = useState<any[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const localTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fungsi Ambil Data (Dipindah ke luar useEffect biar bisa dipanggil tombol)
+  const fetchData = async () => {
+    const team = localStorage.getItem("team_code");
+    if (!team) return;
+
+    try {
+      const { data: sessionData } = await getSession();
+      if (sessionData) setSession(sessionData);
+
+      const { data: teamData, error: teamError } = await supabase
+        .from("teams")
+        .select("id, score")
+        .eq("code", team)
+        .single();
+
+      if (teamError || !teamData) return;
+      setTeamScore(teamData.score);
+
+      const { data: subs, error: subsError } = await supabase
+        .from("submissions")
+        .select(`*, objects ( name )`)
+        .eq("team_id", teamData.id)
+        .order("created_at", { ascending: false });
+
+      if (!subsError && subs) setSubmissions(subs);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    }
+  };
+
+  // Fungsi Khusus Tombol Refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchData();
+    setTimeout(() => setIsRefreshing(false), 800); // Animasi muter 0.8 detik
+  };
 
   useEffect(() => {
     const nick = localStorage.getItem("nickname");
@@ -35,32 +73,6 @@ export default function PesertaHome() {
         router.push("/peserta/rank");
       }
     }, 2000);
-
-    const fetchData = async () => {
-      try {
-        const { data: sessionData } = await getSession();
-        if (sessionData) setSession(sessionData);
-
-        const { data: teamData, error: teamError } = await supabase
-          .from("teams")
-          .select("id, score")
-          .eq("code", team)
-          .single();
-
-        if (teamError || !teamData) return;
-        setTeamScore(teamData.score);
-
-        const { data: subs, error: subsError } = await supabase
-          .from("submissions")
-          .select(`*, objects ( name )`)
-          .eq("team_id", teamData.id)
-          .order("created_at", { ascending: false });
-
-        if (!subsError && subs) setSubmissions(subs);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-      }
-    };
 
     fetchData();
 
@@ -136,9 +148,28 @@ export default function PesertaHome() {
         </div>
 
         <div className="px-4">
+          {/* KARTU POIN TIM (DENGAN TOMBOL REFRESH) */}
           <div className="bg-white rounded-2xl shadow p-4 mb-4 flex justify-between items-center border-l-4 border-green-600">
             <div>
-              <div className="text-xs text-gray-500 font-semibold mb-1">Total Team Score</div>
+              <div className="text-xs text-gray-500 font-semibold mb-1 flex items-center gap-2">
+                Total Team Score
+                {/* TOMBOL REFRESH */}
+                <button 
+                  onClick={handleRefresh} 
+                  className="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-1 rounded-full transition-all"
+                  title="Refresh Score"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className={`h-4 w-4 transition-transform duration-500 ${isRefreshing ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
               <div className="text-3xl font-bold text-green-600">{teamScore}</div>
             </div>
             <div className="text-4xl text-green-200">🏆</div>
@@ -148,7 +179,6 @@ export default function PesertaHome() {
             <div className={`rounded-2xl p-4 text-center text-white shadow-lg mb-4 transition-colors ${session.remaining_seconds < 300 ? 'bg-red-600 animate-pulse' : 'bg-red-500'}`}>
               <div className="text-xs opacity-80 mb-1">Time Left</div>
               <div className="text-4xl font-bold font-mono">{formatTime(session.remaining_seconds)}</div>
-              {/* PASTIKAN PAKAI session.duration_minutes */}
               <div className="text-xs opacity-80 mt-1">of {session.duration_minutes} minutes</div>
             </div>
           ) : (

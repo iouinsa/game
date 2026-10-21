@@ -11,7 +11,7 @@ export default function LoginPeserta() {
   const [nickname, setNickname] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // AUTO LOGIN: Kalau udah pernah login, lempar ke Home
+  // AUTO LOGIN
   useEffect(() => {
     const team = localStorage.getItem("team_code");
     const nick = localStorage.getItem("nickname");
@@ -22,12 +22,15 @@ export default function LoginPeserta() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code || !nickname) return alert("Isi kode tim dan nickname dulu ya!");
+    if (!code || !nickname) return alert("Please fill in both fields!");
     setLoading(true);
 
     const teamCode = code.toUpperCase();
 
     try {
+      localStorage.removeItem("team_code");
+      localStorage.removeItem("nickname");
+
       const { data: teamData, error: teamError } = await supabase
         .from("teams")
         .select("id")
@@ -35,7 +38,7 @@ export default function LoginPeserta() {
         .single();
 
       if (teamError || !teamData) {
-        throw new Error("Kode tim tidak valid! Cek lagi kodenya.");
+        throw new Error("Invalid Team Code! Please check again.");
       }
 
       const { error: memberError } = await supabase
@@ -45,12 +48,12 @@ export default function LoginPeserta() {
           { onConflict: 'team_id,nickname' }
         );
 
-      if (memberError) throw new Error("Gagal mendaftarkan nama: " + memberError.message);
+      if (memberError) throw new Error("Failed to register name: " + memberError.message);
 
       localStorage.setItem("team_code", teamCode);
       localStorage.setItem("nickname", nickname);
       
-      alert(`✅ Masuk sebagai ${nickname}`);
+      alert(`✅ Welcome, ${nickname} (Team ${teamCode})`);
       router.push("/peserta/home");
     } catch (err: any) {
       alert("❌ " + err.message);
@@ -64,34 +67,37 @@ export default function LoginPeserta() {
       <Header />
       <main className="flex-1 p-4 pt-8 overflow-y-auto fade-in">
         <button onClick={() => router.push("/")} className="text-gray-500 font-semibold mb-4 flex items-center gap-1 active:scale-95">
-          ← Kembali
+          ← Back
         </button>
 
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-br from-[#065f46] to-[#047857] text-white p-8 text-center">
             <div className="text-5xl mb-3">👥</div>
-            <h1 className="text-xl font-bold">Masuk Peserta</h1>
+            <h1 className="text-xl font-bold">Participant Login</h1>
           </div>
           <form onSubmit={handleLogin} className="p-5">
-            <label className="block text-sm font-medium mb-1">Kode Tim</label>
+            
+            {/* GANTI LABEL DI SINI */}
+            <label className="block text-sm font-medium mb-1">Your Team</label>
             <input 
               type="text" value={code} onChange={(e) => setCode(e.target.value)}
-              placeholder="KAKTUS" 
+              placeholder="e.g. ORCHID" 
               className="w-full border-2 border-gray-200 rounded-xl p-3 mb-4 text-center text-2xl font-mono font-bold tracking-widest uppercase focus:border-green-500 outline-none text-black"
             />
             
-            <label className="block text-sm font-medium mb-1">Nickname kamu</label>
+            {/* GANTI LABEL DI SINI */}
+            <label className="block text-sm font-medium mb-1">Your Name</label>
             <input 
               type="text" value={nickname} onChange={(e) => setNickname(e.target.value)}
-              placeholder="Andi" 
-              className="w-full border rounded-xl p-3 mb-2 focus:border-green-500 outline-none text-black"
+              placeholder="e.g. Andi" 
+              className="w-full border rounded-xl p-3 mb-4 focus:border-green-500 outline-none text-black"
             />
             
             <button 
               type="submit" disabled={loading}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-xl p-4 font-semibold transition active:scale-95 mt-4"
+              className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-xl p-4 font-semibold transition active:scale-95"
             >
-              {loading ? "Memeriksa..." : "Masuk →"}
+              {loading ? "Checking..." : "Login →"}
             </button>
           </form>
         </div>

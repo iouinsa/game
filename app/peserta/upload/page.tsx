@@ -59,7 +59,7 @@ function UploadForm() {
     fetchObj();
   }, [objId]);
 
-  // FUNGSI UNTUK KOMPRES FOTO
+  // FUNGSI KOMPRES FOTO
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (!selected) return;
@@ -99,9 +99,9 @@ function UploadForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) return alert("Foto wajib diambil!");
-    if (!characteristics || !funFact) return alert("Ciri dan Fun fact wajib diisi!");
-    if (!objId && !newObjName) return alert("Nama objek baru wajib diisi!");
+    if (!file) return alert("Photo is required!");
+    if (!characteristics || !funFact) return alert("Characteristics and Fun fact are required!");
+    if (!objId && !newObjName) return alert("New object name is required!");
 
     setIsUploading(true);
     try {
@@ -113,7 +113,7 @@ function UploadForm() {
           .from("objects")
           .insert([{ 
             name: newObjName, 
-            zone: newObjZone || 'Lokasi tidak disebutkan', 
+            zone: newObjZone || 'Location not specified', 
             points: 15, 
             created_by: teamCode 
           }])
@@ -131,11 +131,11 @@ function UploadForm() {
       const { data: { publicUrl } } = supabase.storage.from("photos").getPublicUrl(fileName);
 
       const teamCode = localStorage.getItem("team_code");
-      const nickname = localStorage.getItem("nickname") || "Anggota";
+      const nickname = localStorage.getItem("nickname") || "Member";
 
       const { data: teamData, error: teamError } = await supabase
         .from("teams").select("id").eq("code", teamCode).single();
-      if (teamError || !teamData) throw new Error("Tim tidak ditemukan.");
+      if (teamError || !teamData) throw new Error("Team not found.");
 
       const { data: memberData } = await supabase
         .from("team_members").select("id").eq("team_id", teamData.id).eq("nickname", nickname).maybeSingle();
@@ -154,11 +154,11 @@ function UploadForm() {
 
       if (dbError) throw dbError;
 
-      alert("✅ Berhasil dikirim ke panitia!");
+      alert("✅ Successfully submitted to the committee!");
       router.push("/peserta/home");
 
     } catch (error: any) {
-      alert("❌ Gagal: " + error.message);
+      alert("❌ Failed: " + error.message);
     } finally {
       setIsUploading(false);
     }
@@ -167,45 +167,45 @@ function UploadForm() {
   return (
     <main className="flex-1 p-4 overflow-y-auto fade-in bg-gray-50">
       <button onClick={() => router.push('/peserta/hunting')} className="text-gray-500 font-semibold mb-4 text-sm flex items-center gap-1">
-        ← Kembali ke Hunting
+        ← Back to Hunting
       </button>
 
       <div className="bg-white rounded-2xl shadow p-4">
-        <h2 className="font-bold text-gray-800 mb-1">Upload Foto</h2>
+        <h2 className="font-bold text-gray-800 mb-1">Upload Photo</h2>
         <p className="text-sm text-green-700 font-semibold mb-4">
-          {objId ? objectData?.name : "Tambah Objek Baru"}
+          {objId ? objectData?.name : "Add New Object"}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {!objId && (
             <div className="bg-blue-50 p-3 rounded-lg space-y-2 border border-blue-200">
               <div>
-                <label className="block text-xs font-semibold mb-1">Nama Objek Baru</label>
-                <input type="text" value={newObjName} onChange={(e) => setNewObjName(e.target.value)} className="w-full border rounded-lg p-2 text-sm text-black" placeholder="misal: Bunga Kecil di Tembok" required />
+                <label className="block text-xs font-semibold mb-1">New Object Name</label>
+                <input type="text" value={newObjName} onChange={(e) => setNewObjName(e.target.value)} className="w-full border rounded-lg p-2 text-sm text-black" placeholder="e.g. Small flower on the wall" required />
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-1">Lokasi / Zona</label>
-                <input type="text" value={newObjZone} onChange={(e) => setNewObjZone(e.target.value)} className="w-full border rounded-lg p-2 text-sm text-black" placeholder="misal: Dekat kolam ikan" />
+                <label className="block text-xs font-semibold mb-1">Location / Zone</label>
+                <input type="text" value={newObjZone} onChange={(e) => setNewObjZone(e.target.value)} className="w-full border rounded-lg p-2 text-sm text-black" placeholder="e.g. Near the fish pond" />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold mb-2">Foto Selfie</label>
+            <label className="block text-xs font-semibold mb-2">Photo</label>
             <div className="border-2 border-dashed border-gray-300 rounded-xl h-48 flex flex-col items-center justify-center text-gray-400 relative overflow-hidden bg-gray-50">
               {preview ? (
                 <img src={preview} alt="Preview" className="w-full h-full object-cover" />
               ) : existingPhoto ? (
                 <div className="w-full h-full relative">
-                  <img src={existingPhoto} alt="Foto Objek" className="w-full h-full object-cover opacity-60" />
+                  <img src={existingPhoto} alt="Object Photo" className="w-full h-full object-cover opacity-60" />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="bg-black/70 text-white px-3 py-1 rounded-full text-xs font-semibold">Foto sudah di-upload</span>
+                    <span className="bg-black/70 text-white px-3 py-1 rounded-full text-xs font-semibold">Photo already uploaded</span>
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="text-5xl mb-2">📷</div>
-                  <div className="text-sm font-semibold">Ambil Foto / Upload</div>
+                  <div className="text-sm font-semibold">Take Photo / Upload</div>
                 </>
               )}
               
@@ -214,18 +214,18 @@ function UploadForm() {
               )}
             </div>
             {existingPhoto && (
-              <p className="text-[10px] text-red-500 mt-1">Objek ini sudah di-upload oleh tim Anda. Tidak bisa upload ulang.</p>
+              <p className="text-[10px] text-red-500 mt-1">This object has been uploaded by your team. Cannot upload again.</p>
             )}
           </div>
 
           <div>
-            <label className="block text-xs font-semibold mb-1">Ciri-ciri yang terlihat</label>
-            <textarea value={characteristics} onChange={(e) => setCharacteristics(e.target.value)} className="w-full border rounded-lg p-2 text-sm text-black" rows={2} placeholder="Tinggi, warna, bentuk..." required />
+            <label className="block text-xs font-semibold mb-1">Visible characteristics</label>
+            <textarea value={characteristics} onChange={(e) => setCharacteristics(e.target.value)} className="w-full border rounded-lg p-2 text-sm text-black" rows={2} placeholder="Tall, green, shape..." required />
           </div>
 
           <div>
             <label className="block text-xs font-semibold mb-1">Fun fact</label>
-            <textarea value={funFact} onChange={(e) => setFunFact(e.target.value)} className="w-full border rounded-lg p-2 text-sm text-black" rows={2} placeholder="Fakta menarik..." required />
+            <textarea value={funFact} onChange={(e) => setFunFact(e.target.value)} className="w-full border rounded-lg p-2 text-sm text-black" rows={2} placeholder="Interesting fact..." required />
           </div>
 
           <button 
@@ -233,7 +233,7 @@ function UploadForm() {
             disabled={isUploading || !!existingPhoto} 
             className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl p-3 font-semibold transition active:scale-95 disabled:opacity-50 mt-4"
           >
-            {isUploading ? "Mengirim..." : existingPhoto ? "Sudah Di-upload" : "Kirim ke Panitia"}
+            {isUploading ? "Sending..." : existingPhoto ? "Already Uploaded" : "Submit to Committee"}
           </button>
         </form>
       </div>

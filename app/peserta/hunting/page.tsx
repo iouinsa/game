@@ -21,10 +21,10 @@ export default function PesertaHunting() {
           >
             <div className="text-8xl mb-2">📸</div>
             <h1 className="text-3xl font-bold text-center leading-tight">
-              TAMBAH<br />OBJEK BARU
+              ADD NEW<br />OBJECT
             </h1>
             <p className="text-sm text-green-100 text-center mt-4 opacity-80">
-              Ketuk di sini untuk memotret objek dan mengirimkannya ke panitia.
+              Tap here to take a photo of the object and submit it to the committee.
             </p>
           </button>
 

@@ -21,15 +21,13 @@ export default function PesertaQuiz() {
       
       if (!nickname || !teamCode) return router.push("/login");
 
-      // 1. Ambil ID Tim & ID Member
       const { data: teamData } = await supabase.from("teams").select("id").eq("code", teamCode).single();
       
       if (!teamData) {
-        alert("Tim tidak ditemukan.");
+        alert("Team not found.");
         return router.push("/peserta/home");
       }
 
-      // PASTIKAN PAKAI TANDA TANYA (?. ) DI SINI
       const { data: memberData } = await supabase
         .from("team_members")
         .select("id")
@@ -38,11 +36,10 @@ export default function PesertaQuiz() {
         .maybeSingle();
       
       if (!memberData) {
-        alert("Data member tidak ditemukan. Coba refresh halaman.");
+        alert("Member data not found. Please refresh the page.");
         return router.push("/peserta/home");
       }
 
-      // 2. Cek apakah AKUN INI udah pernah ngerjain quiz
       const { data: quizData } = await supabase
         .from("quiz_submissions")
         .select("id")
@@ -51,7 +48,6 @@ export default function PesertaQuiz() {
         
       if (quizData) setIsDone(true);
 
-      // 3. Ambil soal quiz & ACAK URUTANNYA
       const { data: qData } = await supabase.from("quiz_questions").select("*");
       if (qData) {
         const shuffled = [...qData].sort(() => Math.random() - 0.5);
@@ -64,8 +60,8 @@ export default function PesertaQuiz() {
   }, [router]);
 
   const startQuiz = () => {
-    if (isDone) return alert("Kamu sudah mengerjakan quiz ini!");
-    if (questions.length === 0) return alert("Panitia belum bikin soal.");
+    if (isDone) return alert("You have already completed this quiz!");
+    if (questions.length === 0) return alert("The committee hasn't created any questions yet.");
     setStep("play");
   };
 
@@ -74,7 +70,7 @@ export default function PesertaQuiz() {
     let newScore = score;
     
     if (selectedIdx === q.correct_index) {
-      newScore += 10; 
+      newScore += 8; 
       setScore(newScore);
     }
 
@@ -116,21 +112,21 @@ export default function PesertaQuiz() {
       <main className="flex-1 p-4 overflow-y-auto fade-in bg-gray-50 flex flex-col">
         
         {loading ? (
-          <div className="text-center mt-10">Memuat data soal...</div>
+          <div className="text-center mt-10">Loading questions...</div>
         ) : step === "intro" ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <div className="text-6xl mb-4">📝</div>
-            <h2 className="text-2xl font-bold text-orange-800 mb-2">Quiz Kebun Raya</h2>
-            <p className="text-sm text-gray-500 mb-8">Jawab pertanyaan dengan benar. Skor akan masuk ke total poin tim.</p>
+            <h2 className="text-2xl font-bold text-orange-800 mb-2">Kebun Raya Quiz</h2>
+            <p className="text-sm text-gray-500 mb-8">Answer correctly. The score will be added to your team's total.</p>
             
             <div className="bg-white rounded-xl shadow p-4 mb-8 w-full">
               <div className="flex justify-between mb-2 border-b pb-2">
-                <span className="text-gray-500 text-sm">Total Soal</span>
+                <span className="text-gray-500 text-sm">Total Questions</span>
                 <span className="font-bold">{questions.length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500 text-sm">Poin per Soal</span>
-                <span className="font-bold">10 Poin</span>
+                <span className="text-gray-500 text-sm">Points per Question</span>
+                <span className="font-bold">8 Points</span>
               </div>
             </div>
 
@@ -140,15 +136,15 @@ export default function PesertaQuiz() {
                 isDone || questions.length === 0 ? 'bg-gray-400 text-white' : 'bg-orange-500 text-white hover:bg-orange-600 active:scale-95'
               }`}
             >
-              {isDone ? "SUDAH MENGERJAKAN" : questions.length === 0 ? "SOAL BELUM ADA" : "MULAI KERJAKAN"}
+              {isDone ? "ALREADY COMPLETED" : questions.length === 0 ? "NO QUESTIONS YET" : "START QUIZ"}
             </button>
-            <button onClick={() => router.push('/peserta/home')} className="w-full mt-3 bg-gray-200 text-gray-700 rounded-xl p-3 font-semibold active:scale-95">Kembali</button>
+            <button onClick={() => router.push('/peserta/home')} className="w-full mt-3 bg-gray-200 text-gray-700 rounded-xl p-3 font-semibold active:scale-95">Back</button>
           </div>
         ) : step === "play" ? (
           <div className="flex-1 flex flex-col">
             <div className="flex justify-between items-center mb-4 text-sm font-bold">
-              <span>Soal {currentIdx + 1} / {questions.length}</span>
-              <span className="text-orange-600">+10 Poin</span>
+              <span>Question {currentIdx + 1} / {questions.length}</span>
+              <span className="text-orange-600">+8 Points</span>
             </div>
             
             <div className="bg-white rounded-2xl shadow p-5 mb-6 min-h-[140px] flex items-center">
@@ -169,19 +165,19 @@ export default function PesertaQuiz() {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <div className="text-7xl mb-4">🎉</div>
-            <h2 className="text-2xl font-bold text-green-800 mb-2">Quiz Selesai!</h2>
+            <h2 className="text-2xl font-bold text-green-800 mb-2">Quiz Completed!</h2>
             
             <div className="bg-white rounded-2xl shadow p-6 mb-6 w-full">
-              <div className="text-sm text-gray-500 mb-1">Skor Kamu</div>
+              <div className="text-sm text-gray-500 mb-1">Your Score</div>
               <div className="text-5xl font-bold text-orange-500 mb-2">{score}</div>
-              <div className="text-sm text-gray-600">dari {questions.length * 10} poin maksimal</div>
+              <div className="text-sm text-gray-600">out of {questions.length * 8} max points</div>
             </div>
 
             <div className="bg-orange-50 text-orange-800 p-3 rounded-xl text-sm mb-6 w-full font-semibold">
-              ✅ Skor ini sudah ditambahkan ke total poin tim kamu!
+              ✅ This score has been added to your team's total points!
             </div>
 
-            <button onClick={() => router.push('/peserta/home')} className="w-full bg-green-600 text-white rounded-xl p-4 font-bold active:scale-95">Kembali ke Beranda</button>
+            <button onClick={() => router.push('/peserta/home')} className="w-full bg-green-600 text-white rounded-xl p-4 font-bold active:scale-95">Back to Home</button>
           </div>
         )}
 

@@ -76,8 +76,6 @@ export default function LoginPeserta() {
             <h1 className="text-xl font-bold">Participant Login</h1>
           </div>
           <form onSubmit={handleLogin} className="p-5">
-            
-            {/* GANTI LABEL DI SINI */}
             <label className="block text-sm font-medium mb-1">Your Team</label>
             <input 
               type="text" value={code} onChange={(e) => setCode(e.target.value)}
@@ -85,7 +83,6 @@ export default function LoginPeserta() {
               className="w-full border-2 border-gray-200 rounded-xl p-3 mb-4 text-center text-2xl font-mono font-bold tracking-widest uppercase focus:border-green-500 outline-none text-black"
             />
             
-            {/* GANTI LABEL DI SINI */}
             <label className="block text-sm font-medium mb-1">Your Name</label>
             <input 
               type="text" value={nickname} onChange={(e) => setNickname(e.target.value)}

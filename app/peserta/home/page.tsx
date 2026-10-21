@@ -113,7 +113,6 @@ export default function PesertaHome() {
     };
   }, [router]);
 
-  // FUNGSI LOGOUT
   const handleLogout = () => {
     localStorage.removeItem("nickname");
     localStorage.removeItem("team_code");
@@ -126,13 +125,12 @@ export default function PesertaHome() {
       <main className="flex-1 overflow-y-auto fade-in pb-4">
         <div className="bg-white p-4 shadow-sm flex justify-between items-center mb-4">
           <div>
-            <h1 className="text-lg font-bold text-green-800">Tim {teamCode}</h1>
-            <p className="text-xs text-gray-500">Halo, {nickname}!</p>
+            <h1 className="text-lg font-bold text-green-800">Team {teamCode}</h1>
+            <p className="text-xs text-gray-500">Hello, {nickname}!</p>
           </div>
-          {/* TOMBOL KELUAR MUNCUL KALAU SWITCH NYALA */}
           {session?.show_logout && (
             <button onClick={handleLogout} className="text-red-500 font-semibold text-xs border border-red-500 px-3 py-1 rounded-lg">
-              Keluar
+              Logout
             </button>
           )}
         </div>
@@ -140,7 +138,7 @@ export default function PesertaHome() {
         <div className="px-4">
           <div className="bg-white rounded-2xl shadow p-4 mb-4 flex justify-between items-center border-l-4 border-green-600">
             <div>
-              <div className="text-xs text-gray-500 font-semibold mb-1">Total Poin Tim</div>
+              <div className="text-xs text-gray-500 font-semibold mb-1">Total Team Score</div>
               <div className="text-3xl font-bold text-green-600">{teamScore}</div>
             </div>
             <div className="text-4xl text-green-200">🏆</div>
@@ -148,9 +146,10 @@ export default function PesertaHome() {
 
           {session ? (
             <div className={`rounded-2xl p-4 text-center text-white shadow-lg mb-4 transition-colors ${session.remaining_seconds < 300 ? 'bg-red-600 animate-pulse' : 'bg-red-500'}`}>
-              <div className="text-xs opacity-80 mb-1">⏱ Sisa Waktu</div>
+              <div className="text-xs opacity-80 mb-1">Time Left</div>
               <div className="text-4xl font-bold font-mono">{formatTime(session.remaining_seconds)}</div>
-              <div className="text-xs opacity-80 mt-1">dari {session.duration_minutes} menit</div>
+              {/* PASTIKAN PAKAI session.duration_minutes */}
+              <div className="text-xs opacity-80 mt-1">of {session.duration_minutes} minutes</div>
             </div>
           ) : (
             <div className="bg-gray-200 animate-pulse h-24 rounded-2xl mb-4"></div>
@@ -158,7 +157,7 @@ export default function PesertaHome() {
 
           <button 
             onClick={() => {
-              if (session?.is_finished) return alert("Waktu sudah habis!");
+              if (session?.is_finished) return alert("Time is up!");
               router.push('/peserta/hunting');
             }} 
             className={`w-full text-white rounded-2xl p-5 mb-3 font-bold text-xl shadow-lg transition flex items-center justify-center gap-3 ${
@@ -170,7 +169,7 @@ export default function PesertaHome() {
           
           <button 
             onClick={() => {
-              if (session?.is_finished) return alert("Waktu sudah habis!");
+              if (session?.is_finished) return alert("Time is up!");
               router.push('/peserta/quiz');
             }} 
             className={`w-full text-white rounded-2xl p-4 mb-6 font-bold text-lg shadow-lg transition flex items-center justify-center gap-3 ${
@@ -180,28 +179,44 @@ export default function PesertaHome() {
             <span className="text-2xl">📝</span> QUIZ
           </button>
 
-          <h3 className="font-bold text-sm text-gray-800 mb-3">📷 Feed Foto Tim Kamu</h3>
+          <h3 className="font-bold text-sm text-gray-800 mb-3">📷 Your Team's Photos</h3>
           
           {submissions.length === 0 ? (
             <div className="bg-white rounded-xl p-6 text-center text-sm text-gray-400 shadow">
-              Belum ada foto. Yuk mulai hunting!
+              No photos yet. Let's start hunting!
             </div>
           ) : (
             <div className="space-y-4">
               {submissions.map(sub => (
                 <div key={sub.id} className="bg-white rounded-2xl shadow overflow-hidden">
-                  <img src={sub.photo_url} alt="Foto" className="w-full h-48 object-cover bg-gray-200" />
+                  <img src={sub.photo_url} alt="Photo" className="w-full h-48 object-cover bg-gray-200" />
                   <div className="p-3">
                     <div className="flex justify-between items-start mb-1">
                       <div>
-                        <div className="font-bold text-sm text-gray-800">{sub.objects?.name || 'Objek'}</div>
+                        <div className="font-bold text-sm text-gray-800">{sub.objects?.name || 'Object'}</div>
                         <div className="text-xs text-gray-500">
-                          Diunggah oleh: <span className="font-semibold">{sub.uploader_name || 'Anggota'}</span>
+                          Uploaded by: <span className="font-semibold">{sub.uploader_name || 'Member'}</span>
                         </div>
                       </div>
+                      
                       {sub.status === 'approved' && (
                         <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold flex-shrink-0">
-                          +{sub.points_awarded} Poin
+                          +{sub.points_awarded} Points
+                        </div>
+                      )}
+                      {sub.status === 'partial' && (
+                        <div className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-bold flex-shrink-0">
+                          +{sub.points_awarded} Points (Partial)
+                        </div>
+                      )}
+                      {sub.status === 'rejected' && (
+                        <div className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-bold flex-shrink-0">
+                          Rejected
+                        </div>
+                      )}
+                      {sub.status === 'pending' && (
+                        <div className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-bold flex-shrink-0">
+                          Pending
                         </div>
                       )}
                     </div>

@@ -1,26 +1,24 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { supabase } from "../../lib/supabase";
 
-export default function BottomNav() {
+// Komponen isi Nav
+function NavContent() {
   const router = useRouter();
   const pathname = usePathname();
   const [showRank, setShowRank] = useState(false);
 
-  // Cek role
   const isAdmin = typeof window !== "undefined" && localStorage.getItem("is_admin") === "true";
 
   useEffect(() => {
-    // 1. Ambil status awal
     const fetchStatus = async () => {
       const { data } = await supabase.from("session_settings").select("show_leaderboard").eq("id", 1).single();
       if (data) setShowRank(data.show_leaderboard);
     };
     fetchStatus();
 
-    // 2. Realtime (kalau admin ngetok switch)
     const channel = supabase.channel('nav_status')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'session_settings' }, (payload) => {
         setShowRank(payload.new.show_leaderboard);
@@ -29,14 +27,12 @@ export default function BottomNav() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // Menu Peserta (Rank cuma muncul kalau showRank = true)
   const pesertaNav = [
     { name: "Home", path: "/peserta/home", icon: "🏠" },
     { name: "Hunting", path: "/peserta/hunting", icon: "📸" },
     ...(showRank ? [{ name: "Rank", path: "/peserta/rank", icon: "🏆" }] : [])
   ];
 
-  // Menu Admin
   const adminNav = [
     { name: "Admin", path: "/admin/dashboard", icon: "🎛️" },
     { name: "Nilai", path: "/admin/penilaian", icon: "📝" },
@@ -68,5 +64,14 @@ export default function BottomNav() {
         );
       })}
     </nav>
+  );
+}
+
+// Komponen Utama (Dibungkus Suspense)
+export default function BottomNav() {
+  return (
+    <Suspense fallback={<div className="h-[60px] bg-white border-t border-gray-200"></div>}>
+      <NavContent />
+    </Suspense>
   );
 }

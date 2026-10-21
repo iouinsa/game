@@ -30,11 +30,9 @@ function UploadForm() {
     }
     
     const fetchObj = async () => {
-      // 1. Ambil data objek
       const { data } = await supabase.from("objects").select("*").eq("id", objId).single();
       setObjectData(data);
 
-      // 2. Cek apakah udah ada yang upload foto buat objek ini di tim yang sama
       const teamCode = localStorage.getItem("team_code");
       if (teamCode) {
         const { data: teamData } = await supabase.from("teams").select("id").eq("code", teamCode).single();
@@ -46,21 +44,53 @@ function UploadForm() {
             .eq("team_id", teamData.id)
             .maybeSingle();
             
-          if (existingSub) {
-            setExistingPhoto(existingSub.photo_url);
-          }
+          if (existingSub) setExistingPhoto(existingSub.photo_url);
         }
       }
     };
     fetchObj();
   }, [objId]);
 
+  // FUNGSI UNTUK KOMPRES FOTO
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
-    if (selected) {
-      setFile(selected);
-      setPreview(URL.createObjectURL(selected));
-    }
+    if (!selected) return;
+
+    // 1. Tampilkan preview sementara (foto asli)
+    setPreview(URL.createObjectURL(selected));
+
+    // 2. Proses Kompresi
+    const reader = new FileReader();
+    reader.readAsDataURL(selected);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 800; // Resolusi maksimal 800px
+        const scaleSize = MAX_WIDTH / img.width;
+        
+        // Kalau foto aslinya lebih kecil dari 800px, biarin aja
+        if (scaleSize >= 1) {
+          setFile(selected);
+          return;
+        }
+
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+        
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Ubah canvas jadi file blob (kualitas 70%)
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const newFile = new File([blob], selected.name, { type: "image/jpeg" });
+            setFile(newFile);
+          }
+        }, "image/jpeg", 0.7); // 0.7 artinya kompresi 70%
+      };
+    };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,7 +103,6 @@ function UploadForm() {
     try {
       let currentObjId = objId;
 
-      // 1. KALAU TAMBAH OBJEK BARU
       if (!objId) {
         const teamCode = localStorage.getItem("team_code");
         const { data: newObj, error: objError } = await supabase
@@ -90,15 +119,14 @@ function UploadForm() {
         currentObjId = newObj.id;
       }
 
-      // 2. UPLOAD FOTO KE STORAGE
-      const fileExt = file.name.split('.').pop();
+      // UPLOAD FOTO
+      const fileExt = 'jpg';
       const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage.from("photos").upload(fileName, file);
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage.from("photos").getPublicUrl(fileName);
 
-      // 3. SIMPAN KE DATABASE
       const teamCode = localStorage.getItem("team_code");
       const nickname = localStorage.getItem("nickname") || "Anggota";
 
@@ -161,11 +189,6 @@ function UploadForm() {
 
           <div>
             <label className="block text-xs font-semibold mb-2">Foto Selfie</label>
-            
-            {/* 
-              KALAU UDAH ADA FOTO (Dari tim lain/upload sebelumnya), TAMPILKAN 
-              KALAU BELUM ADA, TAMPILKAN KOTAK KAMERA UNTUK UPLOAD BARU
-            */}
             <div className="border-2 border-dashed border-gray-300 rounded-xl h-48 flex flex-col items-center justify-center text-gray-400 relative overflow-hidden bg-gray-50">
               {preview ? (
                 <img src={preview} alt="Preview" className="w-full h-full object-cover" />
@@ -183,7 +206,6 @@ function UploadForm() {
                 </>
               )}
               
-              {/* Input file disembunyikan, dan cuma bisa di-klik kalau belum ada foto */}
               {!existingPhoto && (
                 <input type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
               )}

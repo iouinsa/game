@@ -23,6 +23,14 @@ function UploadForm() {
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
+    // RESET FORM SETIAP KALI BUKA HALAMAN
+    setPreview("");
+    setFile(null);
+    setCharacteristics("");
+    setFunFact("");
+    setNewObjName("");
+    setNewObjZone("");
+    
     if (!objId) {
       setObjectData(null);
       setExistingPhoto(null);
@@ -56,10 +64,8 @@ function UploadForm() {
     const selected = e.target.files?.[0];
     if (!selected) return;
 
-    // 1. Tampilkan preview sementara (foto asli)
     setPreview(URL.createObjectURL(selected));
 
-    // 2. Proses Kompresi
     const reader = new FileReader();
     reader.readAsDataURL(selected);
     reader.onload = (event) => {
@@ -67,10 +73,9 @@ function UploadForm() {
       img.src = event.target?.result as string;
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 800; // Resolusi maksimal 800px
+        const MAX_WIDTH = 800; 
         const scaleSize = MAX_WIDTH / img.width;
         
-        // Kalau foto aslinya lebih kecil dari 800px, biarin aja
         if (scaleSize >= 1) {
           setFile(selected);
           return;
@@ -82,13 +87,12 @@ function UploadForm() {
         const ctx = canvas.getContext("2d");
         ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
         
-        // Ubah canvas jadi file blob (kualitas 70%)
         canvas.toBlob((blob) => {
           if (blob) {
             const newFile = new File([blob], selected.name, { type: "image/jpeg" });
             setFile(newFile);
           }
-        }, "image/jpeg", 0.7); // 0.7 artinya kompresi 70%
+        }, "image/jpeg", 0.7); 
       };
     };
   };
@@ -119,7 +123,6 @@ function UploadForm() {
         currentObjId = newObj.id;
       }
 
-      // UPLOAD FOTO
       const fileExt = 'jpg';
       const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage.from("photos").upload(fileName, file);
